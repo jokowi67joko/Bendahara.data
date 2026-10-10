@@ -1,19 +1,18 @@
 import { db } from "./firebase-config.js";
 import { doc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Cek sesi login (semua role diizinkan)
+// 1. Cek sesi login (Izinkan semua role, jangan kunci hanya 'anggota')
 const userRole = sessionStorage.getItem("userRole");
 const userName = sessionStorage.getItem("userName") || sessionStorage.getItem("name") || "Pengguna";
 const memberId = sessionStorage.getItem("memberId") || sessionStorage.getItem("accessKey");
-
-// Cek apakah ada sesi login aktif
 const isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true" || userRole !== null;
 
+// Jika tidak ada sesi login sama sekali, redirect ke login
 if (!isLoggedIn) {
   window.location.href = "index.html";
 }
 
-// Tampilkan nama pengguna di header/sapaan
+// Tampilkan salam / nama pengguna
 const userGreeting = document.getElementById("userGreeting") || document.getElementById("userName");
 if (userGreeting) {
   userGreeting.textContent = `Halo, ${userName}`;
@@ -28,88 +27,120 @@ if (logoutBtn) {
   });
 }
 
-document.getElementById("welcomeTitle").textContent = `Halo, ${userName}`;
-document.getElementById("myNameText").textContent = userName;
-
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  sessionStorage.clear();
-  window.location.href = "index.html";
-});
-
-// Load Saldo Kas Real-time
-onSnapshot(doc(db, "kas", "saldo"), (docSnap) => {
+// 2. Load Saldo Kas Real-time
+onSnapshot(doc(db, "settings", "general"), (docSnap) => {
   if (docSnap.exists()) {
-    const saldo = docSnap.data().nominal || 0;
-    document.getElementById("totalSaldo").textContent = "Rp " + saldo.toLocaleString("id-ID");
+    const data = docSnap.data();
+    const saldo = data.totalSaldo || 0;
+    const totalSaldoElement = document.getElementById("totalSaldo");
+    if (totalSaldoElement) {
+      totalSaldoElement.textContent = "Rp " + saldo.toLocaleString("id-ID");
+    }
   }
 });
 
-// Load Daftar Anggota & Status Diri Sendiri (Real-time)
-const memberListContainer = document.getElementById("memberListContainer");
-const myStatusBadge = document.getElementById("myStatusBadge");
+// 3. Load Daftar Anggota & Status Diri Sendiri (Real-time)
+const membersContainer = document.getElementById("membersContainer");
+const userStatusText = document.getElementById("userStatusText");
 const searchMember = document.getElementById("searchMember");
+
 let allMembers = [];
 
-function renderDashboardMembers(filter = "") {
-  memberListContainer.innerHTML = "";
-  const filtered = allMembers.filter(m => m.nama.toLowerCase().includes(filter.toLowerCase()));
+onSnapshot(collection(db, "members"), (snapshot) => {
+  allMembers = [];
+  membersContainer.innerHTML = "";
 
-  if (filtered.length === 0) {
-    memberListContainer.innerHTML = `<p style="color: var(--text-muted); text-align: center; font-size: 0.9rem;">Tidak ada anggota ditemukan.</p>`;
+  snapshot.forEach((docSnap) => {
+    const d = docSnap.data();
+    d.id = docSnap.id;
+    allMembers.push(d);
+  });
+
+  // Render Status Pembayaran Akun Sendiri (jika memberId ditemukan)
+  if (memberId) {
+    const self = allMembers.find((m) => m.id === memberId || m.name === userName);
+    if (self && userStatusText) {
+      userStatusText.textContent = self.status || "Lunas";
+      userStatusText.style.color = self.status === "Belum Lunas" ? "#ef4444" : "#10b981";
+    }
+  } else if (userStatusText) {
+    userStatusText.textContent = userRole ? userRole.toUpperCase() : "Aktif";
+  }
+
+  renderMembersList(allMembers);
+});
+
+// Fungsi Render Daftar Anggota
+function renderMembersList(members) {
+  if (!membersContainer) return;
+  membersContainer.innerHTML = "";
+
+  if (members.length === 0) {
+    membersContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; font-size: 0.9rem;">Tidak ada anggota ditemukan.</p>';
     return;
   }
 
-  filtered.forEach(m => {
+  members.forEach((member) => {
     const card = document.createElement("div");
-    card.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color);";
-    
+    card.className = "member-card";
+    card.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 12px 16px; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border-color);";
+
+    const isLunas = (member.status || "Lunas") === "Lunas";
+    const badgeStyle = isLunas
+      ? "background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981;"
+      : "background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid #ef4444;";
+
     card.innerHTML = `
-      <span style="font-size: 0.95rem; font-weight: 500;">${m.nama}</span>
       <div>
-        ${m.sudahBayar ? '<span class="badge badge-success">Lunas</span>' : '<span class="badge badge-danger">Belum Bayar</span>'}
+        <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">${member.name || "Tanpa Nama"}</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">${member.role || "Anggota"}</div>
       </div>
+      <span style="font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 20px; ${badgeStyle}">
+        ${member.status || "Lunas"}
+      </span>
     `;
-    memberListContainer.appendChild(card);
+    membersContainer.appendChild(card);
   });
 }
 
-onSnapshot(collection(db, "anggota"), (snapshot) => {
-  allMembers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  
-  // Update status diri sendiri
-  const me = allMembers.find(m => m.id === memberId);
-  if (me) {
-    if (me.sudahBayar) {
-      myStatusBadge.innerHTML = '<span class="badge badge-success" style="font-size: 0.9rem; padding: 6px 14px;">Lunas Periode Ini</span>';
-    } else {
-      myStatusBadge.innerHTML = '<span class="badge badge-danger" style="font-size: 0.9rem; padding: 6px 14px;">Belum Bayar</span>';
-    }
-  }
+// 4. Fitur Cari Anggota
+if (searchMember) {
+  searchMember.addEventListener("input", (e) => {
+    const keyword = e.target.value.toLowerCase();
+    const filtered = allMembers.filter((m) =>
+      (m.name || "").toLowerCase().includes(keyword)
+    );
+    renderMembersList(filtered);
+  });
+}
 
-  renderDashboardMembers(searchMember.value);
-});
-
-searchMember.addEventListener("input", (e) => {
-  renderDashboardMembers(e.target.value);
-});
-
-// Fetch Berita Publik (Contoh dari Dummy API / News API publik)
+// 5. Fetch Berita Publik / Pengumuman
 async function fetchNews() {
   const newsContainer = document.getElementById("newsContainer");
+  if (!newsContainer) return;
+
   try {
-    const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=3");
-    const articles = await response.json();
-    
+    const res = await fetch("https://api-berita-indonesia.vercel.app/antara/terbaru/");
+    const json = await res.json();
+    const articles = json.data.posts.slice(0, 5);
+
     newsContainer.innerHTML = "";
-    articles.forEach(art => {
+    articles.forEach((art) => {
       const item = document.createElement("div");
-      item.style.cssText = "margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);";
-      item.innerHTML = `<strong style="color: var(--text-color); display: block; font-size: 0.9rem; text-transform: capitalize;">${art.title}</strong>
-                        <p style="font-size: 0.8rem; margin-top: 2px; color: var(--text-muted);">${art.body.substring(0, 80)}...</p>`;
+      item.style.cssText = "padding: 10px 0; border-bottom: 1px solid var(--border-color);";
+      item.innerHTML = `
+        <a href="${art.link}" target="_blank" rel="noopener noreferrer" style="color: var(--text-main); text-decoration: none; font-weight: 500; font-size: 0.9rem; display: block; margin-bottom: 4px;">
+          ${art.title}
+        </a>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">${new Date(art.pubDate).toLocaleDateString("id-ID")}</span>
+      `;
       newsContainer.appendChild(item);
     });
   } catch (err) {
-    newsContainer.innerHTML = "Gagal memuat berita terkini.";
+    if (newsContainer) {
+      newsContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Gagal memuat berita terkini.</p>';
+    }
   }
 }
+
 fetchNews();
