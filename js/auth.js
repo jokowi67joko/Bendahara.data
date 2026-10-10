@@ -20,18 +20,24 @@ async function verifyAccess(key) {
     const snapshot = await getDocs(q);
 
     if (!snapshot.empty) {
-      const docData = snapshot.docs[0].data();
-      const role = (docData.role || "anggota").toLowerCase();
+      const docSnap = snapshot.docs[0];
+      const docData = docSnap.data();
 
+      // Tangkap role dari beberapa variasi nama field dan bersihkan spasi
+      const rawRole = docData.role || docData.Role || docData.jabatan || docData.status_jabatan || "anggota";
+      const role = String(rawRole).trim().toLowerCase();
+
+      // Simpan session
       sessionStorage.setItem("isLoggedIn", "true");
       sessionStorage.setItem("userRole", role);
-      sessionStorage.setItem("userName", docData.name || "Pengguna");
-      sessionStorage.setItem("memberId", snapshot.docs[0].id);
+      sessionStorage.setItem("userName", docData.name || docData.nama || "Pengguna");
+      sessionStorage.setItem("memberId", docSnap.id);
 
+      // Cek apakah admin atau bendahara
       if (role === "admin" || role === "bendahara") {
-        window.location.href = "admin.html";
+        window.location.replace("admin.html");
       } else {
-        window.location.href = "dashboard.html";
+        window.location.replace("dashboard.html");
       }
       return true;
     }
