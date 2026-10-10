@@ -14,23 +14,30 @@ function showError(msg) {
   }
 }
 
-async function verifyAccess(key) {
+async function verifyAccess(inputKey) {
   try {
-    const q = query(collection(db, "members"), where("accessKey", "==", key));
+    // 1. Padankan dengan koleksi 'access_codes' dan field 'key' seperti dalam Firebase
+    const q = query(
+      collection(db, "access_codes"), 
+      where("key", "==", inputKey)
+    );
     const snapshot = await getDocs(q);
 
     if (!snapshot.empty) {
       const docSnap = snapshot.docs[0];
       const docData = docSnap.data();
-      const role = (docData.role || "anggota").toLowerCase().trim();
 
-      // Simpan session
+      // Ambil peranan pengguna (admin, bendahara, atau default anggota)
+      const role = (docData.role || "anggota").toLowerCase().trim();
+      const name = docData.name || docData.username || "Pengguna";
+
+      // Simpan maklumat sesi
       sessionStorage.setItem("isLoggedIn", "true");
       sessionStorage.setItem("userRole", role);
-      sessionStorage.setItem("userName", docData.name || "Pengguna");
+      sessionStorage.setItem("userName", name);
       sessionStorage.setItem("memberId", docSnap.id);
 
-      // Pengalihan halaman berdasarkan role
+      // Pengalihan halaman mengikut peranan
       if (role === "admin" || role === "bendahara") {
         window.location.href = "admin.html";
       } else {
@@ -42,8 +49,8 @@ async function verifyAccess(key) {
     showError("Kode akses tidak valid!");
     return false;
   } catch (err) {
-    console.error("Login error:", err);
-    showError("Terjadi kesalahan saat memverifikasi kode akses.");
+    console.error("Ralat log masuk:", err);
+    showError("Ralat sambungan pangkalan data: " + err.message);
     return false;
   }
 }
@@ -55,7 +62,7 @@ if (loginForm) {
     if (key) {
       await verifyAccess(key);
     } else {
-      showError("Harap masukkan kode akses!");
+      showError("Sila masukkan kod akses!");
     }
   });
 }
