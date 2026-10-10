@@ -1,18 +1,23 @@
 import { db } from "./firebase-config.js";
-import { doc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// 1. Cek sesi login (Izinkan semua role, jangan kunci hanya 'anggota')
-const userRole = sessionStorage.getItem("userRole");
-const userName = sessionStorage.getItem("userName") || sessionStorage.getItem("name") || "Pengguna";
-const memberId = sessionStorage.getItem("memberId") || sessionStorage.getItem("accessKey");
-const isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true" || userRole !== null;
+// 1. Validasi Sesi Pengguna
+const userRole = (sessionStorage.getItem("userRole") || "").toLowerCase().trim();
+const userName = sessionStorage.getItem("userName") || "Anggota";
+const memberId = sessionStorage.getItem("memberId");
+const isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
 
-// Jika tidak ada sesi login sama sekali, redirect ke login
+// Jika belum login, tendang ke login
 if (!isLoggedIn) {
   window.location.href = "index.html";
 }
 
-// Tampilkan salam / nama pengguna
+// Jika role admin atau bendahara membuka dashboard.html, alihkan ke admin.html
+if (userRole === "admin" || userRole === "bendahara") {
+  window.location.href = "admin.html";
+}
+
+// Tampilkan salam
 const userGreeting = document.getElementById("userGreeting") || document.getElementById("userName");
 if (userGreeting) {
   userGreeting.textContent = `Halo, ${userName}`;
@@ -27,11 +32,10 @@ if (logoutBtn) {
   });
 }
 
-// 2. Load Saldo Kas Real-time
+// 2. Real-time Saldo Kas Kelas
 onSnapshot(doc(db, "settings", "general"), (docSnap) => {
   if (docSnap.exists()) {
-    const data = docSnap.data();
-    const saldo = data.totalSaldo || 0;
+    const saldo = docSnap.data().totalSaldo || 0;
     const totalSaldoElement = document.getElementById("totalSaldo");
     if (totalSaldoElement) {
       totalSaldoElement.textContent = "Rp " + saldo.toLocaleString("id-ID");
@@ -39,7 +43,7 @@ onSnapshot(doc(db, "settings", "general"), (docSnap) => {
   }
 });
 
-// 3. Load Daftar Anggota & Status Diri Sendiri (Real-time)
+// 3. Status Diri Sendiri & Daftar Anggota
 const membersContainer = document.getElementById("membersContainer");
 const userStatusText = document.getElementById("userStatusText");
 const searchMember = document.getElementById("searchMember");
@@ -48,29 +52,24 @@ let allMembers = [];
 
 onSnapshot(collection(db, "members"), (snapshot) => {
   allMembers = [];
-  membersContainer.innerHTML = "";
-
   snapshot.forEach((docSnap) => {
     const d = docSnap.data();
     d.id = docSnap.id;
     allMembers.push(d);
   });
 
-  // Render Status Pembayaran Akun Sendiri (jika memberId ditemukan)
+  // Cek status bayar akun yang sedang login
   if (memberId) {
     const self = allMembers.find((m) => m.id === memberId || m.name === userName);
     if (self && userStatusText) {
-      userStatusText.textContent = self.status || "Lunas";
+      userStatusText.textContent = self.status || "Belum Lunas";
       userStatusText.style.color = self.status === "Belum Lunas" ? "#ef4444" : "#10b981";
     }
-  } else if (userStatusText) {
-    userStatusText.textContent = userRole ? userRole.toUpperCase() : "Aktif";
   }
 
   renderMembersList(allMembers);
 });
 
-// Fungsi Render Daftar Anggota
 function renderMembersList(members) {
   if (!membersContainer) return;
   membersContainer.innerHTML = "";
@@ -85,7 +84,7 @@ function renderMembersList(members) {
     card.className = "member-card";
     card.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 12px 16px; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border-color);";
 
-    const isLunas = (member.status || "Lunas") === "Lunas";
+    const isLunas = (member.status || "Belum Lunas") === "Lunas";
     const badgeStyle = isLunas
       ? "background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981;"
       : "background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid #ef4444;";
@@ -96,14 +95,14 @@ function renderMembersList(members) {
         <div style="font-size: 0.8rem; color: var(--text-muted);">${member.role || "Anggota"}</div>
       </div>
       <span style="font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 20px; ${badgeStyle}">
-        ${member.status || "Lunas"}
+        ${member.status || "Belum Lunas"}
       </span>
     `;
     membersContainer.appendChild(card);
   });
 }
 
-// 4. Fitur Cari Anggota
+// Fitur Cari Anggota
 if (searchMember) {
   searchMember.addEventListener("input", (e) => {
     const keyword = e.target.value.toLowerCase();
@@ -114,7 +113,7 @@ if (searchMember) {
   });
 }
 
-// 5. Fetch Berita Publik / Pengumuman
+// 4. Fetch Berita Publik
 async function fetchNews() {
   const newsContainer = document.getElementById("newsContainer");
   if (!newsContainer) return;
