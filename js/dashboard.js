@@ -1,12 +1,31 @@
 import { db } from "./firebase-config.js";
 import { doc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Cek sesi login anggota
-const memberId = sessionStorage.getItem("memberId");
-const userName = sessionStorage.getItem("userName");
+// Cek sesi login (semua role diizinkan)
+const userRole = sessionStorage.getItem("userRole");
+const userName = sessionStorage.getItem("userName") || sessionStorage.getItem("name") || "Pengguna";
+const memberId = sessionStorage.getItem("memberId") || sessionStorage.getItem("accessKey");
 
-if (sessionStorage.getItem("userRole") !== "anggota" || !memberId) {
+// Cek apakah ada sesi login aktif
+const isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true" || userRole !== null;
+
+if (!isLoggedIn) {
   window.location.href = "index.html";
+}
+
+// Tampilkan nama pengguna di header/sapaan
+const userGreeting = document.getElementById("userGreeting") || document.getElementById("userName");
+if (userGreeting) {
+  userGreeting.textContent = `Halo, ${userName}`;
+}
+
+// Tombol Logout
+const logoutBtn = document.getElementById("logoutBtn");
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", () => {
+    sessionStorage.clear();
+    window.location.href = "index.html";
+  });
 }
 
 document.getElementById("welcomeTitle").textContent = `Halo, ${userName}`;
