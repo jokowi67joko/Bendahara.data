@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Bank Bendahara</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container" style="display: flex; align-items: center; justify-content: center; height: 100vh;">
+    <div class="card" style="width: 100%; max-width: 400px; text-align: center;">
+      <h2 style="margin-bottom: 8px; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Bank Bendahara</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">Silakan masukkan kode akses Anda</p>
+      
+      <form id="loginForm">
+        <div style="text-align: left;">
+          <input type="password" id="accessKey" placeholder="Masukkan Kode Akses" required autocomplete="current-password">
+        </div>
+        <button type="submit" id="loginBtn">Masuk</button>
+        <div id="errorMsg" class="error-msg" style="display: none;"></div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/auth.js"></script>
+</body>
+</html>

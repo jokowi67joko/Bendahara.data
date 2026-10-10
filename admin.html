@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Admin - Bank Bendahara</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <header>
+    <h1>Panel Bendahara</h1>
+    <i class="fas fa-sign-out-alt menu-icon" id="logoutBtn" title="Keluar"></i>
+  </header>
+
+  <div class="container">
+    <!-- Banner Placeholder -->
+    <div class="banner-placeholder" id="bannerContainer">
+      <span>Banner Placeholder (Catbox URL)</span>
+    </div>
+
+    <!-- Ringkasan Saldo -->
+    <div class="card">
+      <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 4px;">Total Saldo Kas</h3>
+      <h2 id="totalSaldo" style="font-size: 1.8rem; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Rp 0</h2>
+    </div>
+
+    <!-- Pengaturan Kelas -->
+    <div class="card">
+      <h3 style="margin-bottom: 12px; font-size: 1.1rem;">Pengaturan Kelas</h3>
+      <form id="settingsForm">
+        <label style="font-size: 0.85rem; color: var(--text-muted);">Nama Kelas</label>
+        <input type="text" id="classNameInput" placeholder="Contoh: 10¹" required>
+        
+        <label style="font-size: 0.85rem; color: var(--text-muted);">Nominal Bayar Per Orang (Rp)</label>
+        <input type="number" id="nominalInput" placeholder="2000" required>
+
+        <label style="font-size: 0.85rem; color: var(--text-muted);">Interval Pembayaran</label>
+        <select id="intervalSelect">
+          <option value="harian">Harian</option>
+          <option value="mingguan">Mingguan</option>
+          <option value="custom">Custom Hari</option>
+        </select>
+
+        <button type="submit" class="mt-2">Simpan Pengaturan</button>
+      </form>
+    </div>
+
+    <!-- Tambah Anggota -->
+    <div class="card">
+      <h3 style="margin-bottom: 12px; font-size: 1.1rem;">Tambah Anggota Baru</h3>
+      <form id="addMemberForm">
+        <input type="text" id="memberNameInput" placeholder="Nama Lengkap Anggota" required>
+        <button type="submit">Tambah Anggota & Generate Key</button>
+      </form>
+      <div id="generatedKeyBox" style="margin-top: 12px; padding: 10px; background: var(--bg-color); border-radius: 8px; display: none; font-size: 0.9rem;">
+        <strong>Key Unik Anggota:</strong> <span id="newKeyText" style="color: var(--accent-cyan); user-select: all;"></span>
+      </div>
+    </div>
+
+    <!-- Daftar Anggota & Status Bayar -->
+    <div class="card">
+      <h3 style="margin-bottom: 12px; font-size: 1.1rem;">Daftar Anggota</h3>
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchMember" placeholder="Cari nama anggota...">
+      </div>
+      <div id="memberListContainer" style="display: flex; flex-direction: column; gap: 10px;">
+        <!-- List anggota di-render dinamis via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="admin.html" class="nav-item active">
+      <i class="fas fa-home"></i>
+      <span>Admin</span>
+    </a>
+    <a href="#" id="navLog" class="nav-item">
+      <i class="fas fa-history"></i>
+      <span>Riwayat</span>
+    </a>
+  </nav>
+
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

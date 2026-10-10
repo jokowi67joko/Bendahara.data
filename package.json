@@ -1,0 +1,8 @@
+{
+  "name": "bank-bendahara",
+  "version": "1.0.0",
+  "description": "Bank Bendahara web app",
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

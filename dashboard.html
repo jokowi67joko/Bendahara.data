@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Anggota - Bank Bendahara</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <header>
+    <h1 id="welcomeTitle">Dashboard Anggota</h1>
+    <i class="fas fa-sign-out-alt menu-icon" id="logoutBtn" title="Keluar"></i>
+  </header>
+
+  <div class="container">
+    <!-- Banner Placeholder -->
+    <div class="banner-placeholder" id="bannerContainer">
+      <span>Banner Placeholder (Catbox URL)</span>
+    </div>
+
+    <!-- Ringkasan Saldo Kas -->
+    <div class="card">
+      <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 4px;">Total Saldo Kas Kelas</h3>
+      <h2 id="totalSaldo" style="font-size: 1.8rem; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Rp 0</h2>
+    </div>
+
+    <!-- Status Pembayaran Diri Sendiri -->
+    <div class="card" style="border-color: var(--accent-cyan);">
+      <h3 style="margin-bottom: 8px; font-size: 1.1rem;">Status Pembayaran Anda</h3>
+      <div id="myStatusContainer" style="display: flex; justify-content: space-between; align-items: center;">
+        <span id="myNameText" style="font-weight: 600;">Memuat...</span>
+        <div id="myStatusBadge">-</div>
+      </div>
+    </div>
+
+    <!-- Berita Terkini Carousel / Feed -->
+    <div class="card">
+      <h3 style="margin-bottom: 10px; font-size: 1.1rem;"><i class="fas fa-newspaper" style="color: var(--accent-cyan);"></i> Berita & Informasi Terkini</h3>
+      <div id="newsContainer" style="font-size: 0.9rem; color: var(--text-muted);">
+        Memuat berita terkini...
+      </div>
+    </div>
+
+    <!-- Daftar Semua Anggota -->
+    <div class="card">
+      <h3 style="margin-bottom: 12px; font-size: 1.1rem;">Status Anggota Kelas</h3>
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchMember" placeholder="Cari nama anggota...">
+      </div>
+      <div id="memberListContainer" style="display: flex; flex-direction: column; gap: 10px;">
+        <!-- List anggota read-only -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="dashboard.html" class="nav-item active">
+      <i class="fas fa-home"></i>
+      <span>Dashboard</span>
+    </a>
+  </nav>
+
+  <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>
