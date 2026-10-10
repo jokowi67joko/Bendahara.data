@@ -5,22 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Bank Bendahara</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Styling pelengkap jika belum ada di style.css */
+    .login-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .brand-title {
+      margin-bottom: 8px;
+      background: var(--accent-gradient, linear-gradient(135deg, #2563eb, #1d4ed8));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      color: var(--text-muted, #64748b);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+  </style>
 </head>
 <body>
-  <div class="container" style="display: flex; align-items: center; justify-content: center; height: 100vh;">
-    <div class="card" style="width: 100%; max-width: 400px; text-align: center;">
-      <h2 style="margin-bottom: 8px; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Bank Bendahara</h2>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">Silakan masukkan kode akses Anda</p>
+  <main class="login-wrapper">
+    <div class="card login-card">
+      <h2 class="brand-title">Bank Bendahara</h2>
+      <p class="subtitle">Silakan masukkan kode akses Anda</p>
       
-      <form id="loginForm">
-        <div style="text-align: left;">
-          <input type="password" id="accessKey" placeholder="Masukkan Kode Akses" required autocomplete="current-password">
+      <form id="loginForm" novalidate>
+        <div style="text-align: left; margin-bottom: 16px;">
+          <label for="accessKey" class="sr-only">Kode Akses</label>
+          <input 
+            type="password" 
+            id="accessKey" 
+            name="accessKey"
+            placeholder="Masukkan Kode Akses" 
+            required 
+            autocomplete="current-password"
+            style="width: 100%; box-sizing: border-box;"
+          >
         </div>
-        <button type="submit" id="loginBtn">Masuk</button>
-        <div id="errorMsg" class="error-msg" style="display: none;"></div>
+        
+        <button type="submit" id="loginBtn" style="width: 100%;">Masuk</button>
+        <div id="errorMsg" class="error-msg" role="alert" style="display: none; margin-top: 12px; color: #ef4444; font-size: 0.875rem;"></div>
       </form>
     </div>
-  </div>
+  </main>
 
   <script type="module" src="js/auth.js"></script>
 </body>
