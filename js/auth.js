@@ -1,85 +1,50 @@
-import { auth, signInWithCustomToken } from "./firebase-config.js";
+import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-let attemptCount = 0;
-let isLocked = false;
-let lockTimer = null;
+// Inisialisasi Firestore (pastikan app firebase sudah di-init)
+const db = getFirestore();
 
-const loginForm = document.getElementById("loginForm");
-const accessKeyInput = document.getElementById("accessKey");
-const errorMsg = document.getElementById("errorMsg");
-const loginBtn = document.getElementById("loginBtn");
+// Fungsi validasi kode akses
+async function verifyAccessCode(inputCode) {
+  try {
+    // Cari dokumen di koleksi access_codes yang field 'key'-nya cocok
+    const q = query(
+      collection(db, "access_codes"),
+      where("key", "==", inputCode)
+    );
 
-if (loginForm) {
-  loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (isLocked) return;
+    const querySnapshot = await getDocs(q);
 
-    const key = accessKeyInput.value.trim();
-    if (!key) return;
-
-    loginBtn.disabled = true;
-    loginBtn.textContent = "Memeriksa...";
-    errorMsg.style.display = "none";
-
-    try {
-      // Panggil serverless function Vercel
-      const response = await fetch("/api/verifyKey", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key })
-      });
-      const data = await response.json();
-
-      if (data.success) {
-        await signInWithCustomToken(auth, data.token);
-
-        sessionStorage.setItem("userRole", data.role);
-        sessionStorage.setItem("userName", data.name || "Admin");
-        sessionStorage.setItem("memberId", data.memberId || "");
-
-        if (data.role === "admin") {
-          window.location.href = "admin.html";
-        } else {
-          window.location.href = "dashboard.html";
-        }
-      } else {
-        handleFailedAttempt(data.message || "Kode akses salah.");
-      }
-    } catch (err) {
-      console.error(err);
-      handleFailedAttempt("Gagal terhubung ke server atau masalah jaringan.");
-    } finally {
-      loginBtn.disabled = false;
-      loginBtn.textContent = "Masuk";
+    if (!querySnapshot.empty) {
+      // Kode cocok
+      alert("Login berhasil!");
+      // Tambahkan logika redirect ke halaman utama jika diperlukan
+      // window.location.href = "dashboard.html";
+      return true;
+    } else {
+      // Kode tidak ditemukan
+      alert("Kode akses salah!");
+      return false;
     }
-  });
+  } catch (error) {
+    console.error("Error verifikasi kode:", error);
+    alert("Terjadi kesalahan saat memeriksa kode.");
+    return false;
+  }
 }
 
-function handleFailedAttempt(message) {
-  attemptCount++;
-  errorMsg.textContent = message;
-  errorMsg.style.display = "block";
+// Event listener tombol login
+const loginBtn = document.getElementById("loginBtn");
+const codeInput = document.getElementById("accessCodeInput");
 
-  if (attemptCount >= 3) {
-    isLocked = true;
-    let cooldown = 10;
-    accessKeyInput.disabled = true;
-    loginBtn.disabled = true;
+if (loginBtn && codeInput) {
+  loginBtn.addEventListener("click", async () => {
+    const enteredCode = codeInput.value.trim();
 
-    errorMsg.textContent = `Terlalu banyak percobaan salah. Coba lagi dalam ${cooldown} detik.`;
+    if (!enteredCode) {
+      alert("Masukkan kode akses terlebih dahulu!");
+      return;
+    }
 
-    lockTimer = setInterval(() => {
-      cooldown--;
-      if (cooldown > 0) {
-        errorMsg.textContent = `Terlalu banyak percobaan salah. Coba lagi dalam ${cooldown} detik.`;
-      } else {
-        clearInterval(lockTimer);
-        isLocked = false;
-        attemptCount = 0;
-        accessKeyInput.disabled = false;
-        loginBtn.disabled = false;
-        errorMsg.style.display = "none";
-      }
-    }, 1000);
-  }
+    await verifyAccessCode(enteredCode);
+  });
 }
