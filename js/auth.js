@@ -1,12 +1,43 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Inisialisasi Firestore (pastikan app firebase sudah di-init)
-const db = getFirestore();
+// Konfigurasi Firebase dari proyek database kamu
+const firebaseConfig = {
+  apiKey: "AIzaSyBm_xQd6Ce2zg3tVIwgPOBon",
+  authDomain: "data-base-267b0.firebaseapp.com",
+  projectId: "data-base-267b0",
+  storageBucket: "data-base-267b0.firebasestorage.app",
+  messagingSenderId: "302140233352",
+  appId: "1:302140233352:web:e63b5f774374e5d9aa713d"
+};
 
-// Fungsi validasi kode akses
+// Inisialisasi Firebase & Firestore
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Selektor elemen sesuai HTML index
+const loginForm = document.getElementById("loginForm");
+const accessKeyInput = document.getElementById("accessKey");
+const loginBtn = document.getElementById("loginBtn");
+const errorMsg = document.getElementById("errorMsg");
+
+function showError(msg) {
+  if (errorMsg) {
+    errorMsg.textContent = msg;
+    errorMsg.style.display = "block";
+  }
+}
+
+function hideError() {
+  if (errorMsg) {
+    errorMsg.textContent = "";
+    errorMsg.style.display = "none";
+  }
+}
+
+// Fungsi verifikasi kode akses
 async function verifyAccessCode(inputCode) {
   try {
-    // Cari dokumen di koleksi access_codes yang field 'key'-nya cocok
     const q = query(
       collection(db, "access_codes"),
       where("key", "==", inputCode)
@@ -15,36 +46,44 @@ async function verifyAccessCode(inputCode) {
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
-      // Kode cocok
-      alert("Login berhasil!");
-      // Tambahkan logika redirect ke halaman utama jika diperlukan
-      // window.location.href = "dashboard.html";
+      sessionStorage.setItem("isLoggedIn", "true");
+      // Arahkan ke file dashboard kamu
+      window.location.href = "dashboard.html";
       return true;
     } else {
-      // Kode tidak ditemukan
-      alert("Kode akses salah!");
+      showError("Kode akses salah. Silakan coba lagi.");
       return false;
     }
   } catch (error) {
-    console.error("Error verifikasi kode:", error);
-    alert("Terjadi kesalahan saat memeriksa kode.");
+    console.error("Firebase Error:", error);
+    showError("Gagal terhubung ke server atau masalah jaringan.");
     return false;
   }
 }
 
-// Event listener tombol login
-const loginBtn = document.getElementById("loginBtn");
-const codeInput = document.getElementById("accessCodeInput");
+// Event handler submit form
+if (loginForm) {
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideError();
 
-if (loginBtn && codeInput) {
-  loginBtn.addEventListener("click", async () => {
-    const enteredCode = codeInput.value.trim();
+    const enteredCode = accessKeyInput ? accessKeyInput.value.trim() : "";
 
     if (!enteredCode) {
-      alert("Masukkan kode akses terlebih dahulu!");
+      showError("Masukkan kode akses terlebih dahulu!");
       return;
     }
 
+    if (loginBtn) {
+      loginBtn.disabled = true;
+      loginBtn.textContent = "Memeriksa...";
+    }
+
     await verifyAccessCode(enteredCode);
+
+    if (loginBtn) {
+      loginBtn.disabled = false;
+      loginBtn.textContent = "Masuk";
+    }
   });
 }
